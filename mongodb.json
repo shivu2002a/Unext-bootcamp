@@ -1,0 +1,410 @@
+db.Movies.find();
+db.Movies.insertMany([
+  {'name':'Kantara', 'category':'Action', 'year': 2022, 'revenue': 500
+  },
+  {'name':'Sholay', 'category':'Action', 'year': 1972, 'revenue': 100
+  },
+  {'name':'Drishyam', 'category':'Thriller', 'year': 2022, 'revenue': 600
+  },
+  {'name':'Bahubali 2', 'category':'Action', 'year': 2020, 'revenue': 500
+  },
+  {'name':'Gadar 2', 'category':'Action', 'year': 2023, 'revenue': 1000
+  },
+  {'name':'Bhediya', 'category':'Thriller', 'year': 2023, 'revenue': 660
+  }
+])
+
+db.Movies.insertOne({_id: 1, 'name':'Bahubali 2', 'category':'Action', 'year': 2014, 'revenue': 1600
+})
+db.Movies.insertOne({_id: 4, 'title':'Zanjeer', 'category':'Action', 'year': 2014, 'revenue': 1600, 'producer':'Rajmouli'
+})
+
+db.Movies.insertOne({_id: 5, 'title':'Tanahji', 'category': ['Action', 'History'
+  ], 'year': 2019, 'revenue': 1600, 'producer':'Rajmouli'
+})
+
+db.Movies.updateOne({where condition
+},
+{$set{fieldName : fieldValue
+  }
+});
+
+
+set -> for fieldValue
+rename -> for fieldName
+unset -> remove a field
+({where
+}, $unset{fieldName: ""
+})
+
+upsert = update + insert
+
+Use $setOnInsert when you want to set default values or initialize fields 
+only during the insertion of new documents. 
+Use $set for regular updates that may or may not result in new document insertions.
+
+$gt - greater then
+$gte - greater then or equal to
+$lt - less then
+$lte - less then or equal to
+$ne - not equals to
+
+OR condition -> db.Movies.find({
+  "$or": [
+    {
+      "category": "Action"
+    },
+    {
+      "year": 2022
+    }
+  ]
+})
+AND condition -> db.Movies.find({
+  "year": {$gt : 2020, $lt : 2024
+  }
+})
+OR condition -> db.Movies.find({
+  "$and": [
+    {
+      "category": "Action"
+    },
+    {
+      "year": 2022
+    }
+  ]
+})
+
+db.Movies.find({
+  "$and": [
+    {
+      "year": {$ne : 1995
+      }
+    },
+    {$or: [
+        {
+          "category": "Action"
+        },
+        {
+          "revenue": {$gt : 550
+          }
+        }
+      ]
+    }
+  ]
+})
+
+
+db.Movies.find(
+  {year: {$ne : 1995
+  },
+    $or: [
+    {category: "Action"
+    },
+    {revenue : {$gt : 550
+      }
+    }
+  ]
+});
+
+// Selecting particular fields 
+db.Movies.find( {},
+{
+    year : 1,
+    category: 1
+}
+);
+
+db.Movies.aggregate([
+  {
+  $group: {
+    _id: "$category",
+    count: {$sum: 1
+      }
+    }
+  }
+])
+
+db.Movies.aggregate([
+  {
+    $match: {
+      year: 2022
+    }
+  },
+  {
+  $group: {
+    _id: "$category",
+    count: {$sum: 1
+      }
+    }
+  }
+])
+
+db.Movies.aggregate([
+  {$match: {year: 2022
+    }
+  },
+  {$group: {_id: "$category", totalRevenue: {$sum: "$revenue"
+      }, avgRevenue: {$avg: "$revenue"
+      }
+    }
+  }
+]);
+
+db.Movies.aggregate([
+  {$match : {'category':'Action'
+    }
+  },
+  {$group: {_id:'$category', total_revenue: {$sum:'$revenue'
+      }
+    }
+  },
+  {$project : {'category': 1, 'total_revenue': 1
+    }
+  }
+])
+
+// Round up the avg value through project !!
+db.Movies.aggregate([
+  {$match : {'category':'Action'
+    }
+  },
+  {$group: {_id:'$category', total_revenue: {$sum:'$revenue'
+      }
+    }
+  },
+  {$project : {'category': 1, 'total_revenue': 1
+    }
+  }
+])
+
+db.students.insertOne( { _id: 1, scores: [ 44, 78, 38, 80 ] } )
+db.students.updateOne(
+   { _id: 1 },
+   { $push: { scores: 89 } }
+)
+
+{ "_id" : 1, "scores" : [ 40, 50, 60 ] }
+db.students.updateOne(
+   { _id: 1 },
+   {
+     $push: {
+       scores: {
+         $each: [ 80, 78, 86 ],
+         $slice: -5
+       }
+     }
+   }
+)
+
+slice -> positive indicates contain/retain only last elements
+       -> negative indicates contain/retain only last elements
+       zero indicates no retaining of any elements
+
+Find top 2 highest grossing Movies in each category
+Find the Top 2 Highest-Grossing Movies in Each Category
+
+db.Movies.aggregate([
+  {
+    $sort: { revenue: -1 }
+  },
+  {
+    //using push inside group
+    $group: {
+      _id: "$category",
+      topMovies: {
+        $push: {
+          name: "$title",
+          revenue: "$revenue"
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      // Using slice inside project
+      topMovies: { $slice: ["$topMovies", 2] }
+    }
+  }
+])
+
+
+db.Movies.aggregate([
+  { $sort: { "revenue": 1}},
+  { $limit: 2},
+  {$project: {title: 1, revenue: 1}}
+]);
+
+
+Aggregation Pipeline Activity
+
+Create a collection of document with below keys 
+{employeeid:number,employee_first_name:text,employee_last_name:text,department:text,designation:text,basic_salary:number,dearness_allowance:number,hra:number,pf:number,gross_salary:number,net_salary:number}
+
+different departments to be used Accounts,Sales,Training,IT
+
+different designations to be used Asst Manager ,Team Leader,Manager,Staff
+
+You are in support of HR department and have to allocate each of below give employees to above departments
+
+Erric Jones,Simond Touffel,Bruce Wayne,Klarke Kentt,Will Wade,Erric Bana,Tom Bruth
+
+The Salary has to be in range for different heads as 
+basic  12000 to 13000
+da 1000 to 2000
+hra 300 to 400
+pf 200 to 400
+gross salary 15000 to 25000
+net salary 11000 to 15000
+
+
+=============================================================
+Create summary using aggregation for below requirements 
+
+total basic based on  department and designation
+total da based on department and designation 
+avg hra based on department and designation 
+employee getting maximum net salary 
+employee getting minimum net salary 
+count of employee based on department and designation
+
+db.employees.insert({
+  _id: 1, 
+  employee_first_name:"Erric",
+  employee_last_name: "Jones",
+  department:"IT",
+  designation:"Staff",
+  basic_salary:12000,
+  dearness_allowance:1500,
+  pf:300,
+  hra:400,
+  gross_salary:16000,
+  net_salary:12000
+})
+
+db.employees.insertmany({
+  _id: 2, 
+  employee_first_name:"Simond",
+  employee_last_name: "Touffel",
+  department:"Sales",
+  designation:"Asst Manager",
+  basic_salary:12100,
+  dearness_allowance:1520,
+  pf:330,
+  hra:370,
+  gross_salary:17000,
+  net_salary:11500
+},
+{
+  _id: 3, 
+  employee_first_name:"Bruce",
+  employee_last_name: "Wayne",
+  department:"Training",
+  designation:"Manager",
+  basic_salary:12200,
+  dearness_allowance:1510,
+  pf:340,
+  hra:380,
+  gross_salary:17000,
+  net_salary:11500
+},
+{
+  _id: 4, 
+  employee_first_name:"Klarke",
+  employee_last_name: "Kent",
+  department:"Accounts",
+  designation:"Team Leader",
+  basic_salary:12200,
+  dearness_allowance:1510,
+  pf:340,
+  hra:380,
+  gross_salary:17000,
+  net_salary:11500
+},
+{
+  _id: 5, 
+  employee_first_name:"Will",
+  employee_last_name: "Wade",
+  department:"Accounts",
+  designation:"Staff",
+  basic_salary:12300,
+  dearness_allowance:1540,
+  pf:330,
+  hra:320,
+  gross_salary:19000,
+  net_salary:11800
+},
+{
+  _id: 6, 
+  employee_first_name:"Erric",
+  employee_last_name: "Bana",
+  department:"IT",
+  designation:"Manager",
+  basic_salary:12300,
+  dearness_allowance:1540,
+  pf:330,
+  hra:320,
+  gross_salary:20000,
+  net_salary:14000
+},
+{
+  _id: 7, 
+  employee_first_name:"Tom",
+  employee_last_name: "Bruth",
+  department:"Accounts",
+  designation:"Asst Manager",
+  basic_salary:12500,
+  dearness_allowance:1570,
+  pf:340,
+  hra:310,
+  gross_salary:24000,
+  net_salary:13000
+})
+
+1. 
+db.employees.aggregate(
+[{$group: {
+  _id:{department: "$department", designation: "$designation"},
+  total_da: { $sum: "$dearness_allowance" }}
+}]
+);
+
+2.
+db.employees.aggregate(
+[{$group: {
+  _id:{department: "$department", designation: "$designation"},
+  total_basic: { $sum: "$basic_salary" }}
+}]
+);
+
+3.
+db.employees.aggregate(
+[{$group: {
+  _id:{department: "$department", designation: "$designation"},
+  avg_hra: { $avg: "$hra" }}
+}]
+);
+
+4.
+db.employees.aggregate(
+  {$sort: {net_salary:1}},
+  {$limit: 1}
+)
+
+5.
+db.employees.aggregate(
+  {$sort: {net_salary: -1}},
+  {$limit: 1}
+)
+
+6.
+db.employees.aggregate([
+  {
+    $group: {
+      _id: { department: "$department", designation: "$designation" },
+      employee_count: { $count: {} }
+    }
+  }
+])
+
+
